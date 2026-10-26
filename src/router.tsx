@@ -13,6 +13,7 @@ import EditCategory from "./pages/EditCategory";
 import Transactions from "./pages/Transactions";
 import CreateTransaction from "./pages/CreateTransaction";
 import EditTransaction from "./pages/EditTransaction";
+import Layout from "./components/Layout";
 
 const router = createBrowserRouter([
   {
@@ -24,88 +25,24 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: "/",
-    element: <Login />,
-  },
-  {
-    path: "/dashboard",
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <Layout />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: "/accounts",
-    element: (
-      <ProtectedRoute>
-        <Accounts />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/accounts/create",
-    element: (
-      <ProtectedRoute>
-        <CreateAccount />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/accounts/:id/edit",
-    element: (
-      <ProtectedRoute>
-        <EditAccount />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/categories",
-    element: (
-      <ProtectedRoute>
-        <Categories />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/categories/create",
-    element: (
-      <ProtectedRoute>
-        <CreateCategory />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/categories/:id/edit",
-    element: (
-      <ProtectedRoute>
-        <EditCategory />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/transactions",
-    element: (
-      <ProtectedRoute>
-        <Transactions />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/transactions/create",
-    element: (
-      <ProtectedRoute>
-        <CreateTransaction />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/transactions/:id/edit",
-    element: (
-      <ProtectedRoute>
-        <EditTransaction />
-      </ProtectedRoute>
-    ),
+    children: [
+      { path: "/", element: <Dashboard /> },
+      { path: "/dashboard", element: <Dashboard /> },
+      { path: "/accounts", element: <Accounts /> },
+      { path: "/accounts/create", element: <CreateAccount /> },
+      { path: "/accounts/:id/edit", element: <EditAccount /> },
+      { path: "/categories", element: <Categories /> },
+      { path: "/categories/create", element: <CreateCategory /> },
+      { path: "/categories/:id/edit", element: <EditCategory /> },
+      { path: "/transactions", element: <Transactions /> },
+      { path: "/transactions/create", element: <CreateTransaction /> },
+      { path: "/transactions/:id/edit", element: <EditTransaction /> },
+    ],
   },
 ]);
 

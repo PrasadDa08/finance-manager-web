@@ -48,14 +48,14 @@ function Transactions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F3FF]">
+      <div className="flex items-center justify-center bg-[#F5F3FF]">
         <p className="text-[#64748B]">Loading transactions...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F3FF] p-6">
+    <div className="bg-[#F5F3FF] p-6">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-[#1E293B]">Transactions</h1>
