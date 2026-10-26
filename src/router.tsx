@@ -10,6 +10,9 @@ import EditAccount from "./pages/EditAccount";
 import Categories from "./pages/Categories";
 import CreateCategory from "./pages/CreateCategory";
 import EditCategory from "./pages/EditCategory";
+import Transactions from "./pages/Transactions";
+import CreateTransaction from "./pages/CreateTransaction";
+import EditTransaction from "./pages/EditTransaction";
 
 const router = createBrowserRouter([
   {
@@ -77,6 +80,30 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <EditCategory />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/transactions",
+    element: (
+      <ProtectedRoute>
+        <Transactions />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/transactions/create",
+    element: (
+      <ProtectedRoute>
+        <CreateTransaction />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/transactions/:id/edit",
+    element: (
+      <ProtectedRoute>
+        <EditTransaction />
       </ProtectedRoute>
     ),
   },
