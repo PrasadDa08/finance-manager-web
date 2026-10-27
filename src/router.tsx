@@ -14,6 +14,7 @@ import Transactions from "./pages/Transactions";
 import CreateTransaction from "./pages/CreateTransaction";
 import EditTransaction from "./pages/EditTransaction";
 import Layout from "./components/Layout";
+import More from "./pages/more";
 
 const router = createBrowserRouter([
   {
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
       { path: "/transactions", element: <Transactions /> },
       { path: "/transactions/create", element: <CreateTransaction /> },
       { path: "/transactions/:id/edit", element: <EditTransaction /> },
+      { path: "/more", element: <More /> },
     ],
   },
 ]);
