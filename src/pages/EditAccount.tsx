@@ -245,8 +245,8 @@ function LabelWithInfo({
   onInfo: () => void;
 }) {
   return (
-    <label className="flex items-center gap-1.5 mb-1 text-sm font-medium text-[#134E4A]">
-      {label}
+    <div className="flex items-center gap-1.5 mb-1">
+      <span className="text-sm font-medium text-[#134E4A]">{label}</span>
       <button
         type="button"
         onClick={onInfo}
@@ -254,7 +254,7 @@ function LabelWithInfo({
       >
         i
       </button>
-    </label>
+    </div>
   );
 }
 

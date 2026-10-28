@@ -1,40 +1,68 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import z from "zod";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
 import { createTransaction } from "../api/transactions";
 import { getAccounts } from "../api/accounts";
 import { getCategories } from "../api/categories";
-import { useNavigate } from "react-router-dom";
+import { useToastStore } from "../store/toastStore";
 
 const transactionSchema = z.object({
   account_id: z.coerce.number().min(1, "Please select an account"),
   category_id: z.coerce.number().min(1, "Please select a category"),
   type: z.enum(["income", "expense"]),
-  amount: z.coerce.number().min(0.01, "Amount must be greater than zero"),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   note: z.string().optional(),
   transaction_date: z.string().min(1, "Date is required"),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
-interface Account {
-  id: number;
-  name: string;
-}
+const fieldHelp: Record<string, { title: string; body: string }> = {
+  type: {
+    title: "Type",
+    body: "Income = money coming in. Expense = money going out.",
+  },
+  account_id: {
+    title: "Account",
+    body: "Which account this money moved in or out of.",
+  },
+  category_id: {
+    title: "Category",
+    body: "Why this money moved, e.g. Salary, Food, Rent.",
+  },
+  amount: {
+    title: "Amount",
+    body: "How much money moved in this transaction.",
+  },
+  transaction_date: {
+    title: "Date",
+    body: "When this transaction happened.",
+  },
+  note: {
+    title: "Note",
+    body: "Optional short detail about this transaction.",
+  },
+};
 
-interface Category {
-  id: number;
-  name: string;
-  type: "income" | "expense";
-}
+const typeLabel: Record<string, string> = {
+  bank: "Bank",
+  cash: "Cash",
+  credit_card: "Credit Card",
+  wallet: "Wallet",
+};
 
 function CreateTransaction() {
   const navigate = useNavigate();
+  const showToast = useToastStore((s) => s.show);
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [fetching, setFetching] = useState(true);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [infoKey, setInfoKey] = useState<string | null>(null);
 
   const {
     register,
@@ -48,6 +76,8 @@ function CreateTransaction() {
       type: "expense",
       transaction_date: new Date().toISOString().slice(0, 10),
       note: "",
+      account_id: 0,
+      category_id: 0,
     },
   });
 
@@ -56,21 +86,23 @@ function CreateTransaction() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setFetching(true);
         const [accountsRes, categoriesRes] = await Promise.all([
           getAccounts(),
           getCategories(),
         ]);
-        setAccounts(accountsRes.data.data);
-        setCategories(categoriesRes.data.data);
-      } catch (err: any) {
-        setError(err.response?.data?.message);
+        setAccounts(accountsRes.data.data || []);
+        setCategories(categoriesRes.data.data || []);
+      } catch (err) {
+        setError("Failed to load accounts or categories");
+      } finally {
+        setFetching(false);
       }
     };
-
     loadData();
   }, []);
 
-  // Reset category when type changes
+  // reset category when type changes
   useEffect(() => {
     setValue("category_id", 0);
   }, [selectedType, setValue]);
@@ -84,40 +116,78 @@ function CreateTransaction() {
       setLoading(true);
       setError(null);
 
-      await createTransaction(data);
+      await createTransaction({
+        account_id: data.account_id,
+        category_id: data.category_id,
+        type: data.type,
+        amount: data.amount,
+        note: data.note || undefined,
+        transaction_date: data.transaction_date,
+      });
 
+      showToast("Transaction added", "success");
       navigate("/transactions");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create transaction");
+      const message =
+        err.response?.data?.message || "Failed to create transaction";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#EEFCF8] flex items-center justify-center">
+        <p className="text-sm text-[#5B7A76]">Loading...</p>
+      </div>
+    );
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#EEFCF8] flex items-center justify-center p-4">
+        <div className="bg-white border border-[#99F6E4] rounded-2xl p-5 w-full max-w-md">
+          <h1 className="text-xl font-bold text-[#134E4A] mb-2">
+            Add account first
+          </h1>
+          <p className="text-sm text-[#5B7A76] mb-4">
+            You need at least one account before adding a transaction.
+          </p>
+          <Link
+            to="/accounts/create"
+            className="inline-block bg-[#7C3AED] text-white text-sm px-4 py-2.5 rounded-lg"
+          >
+            Add account
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F5F3FF] flex items-center justify-center p-6">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md border border-[#E9D5FF]">
-        <h1 className="text-3xl font-bold text-[#1E293B] mb-2 text-center">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#EEFCF8] flex items-center justify-center p-4 md:p-6">
+      <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm w-full max-w-md border border-[#99F6E4]">
+        <h1 className="text-2xl font-bold text-[#134E4A] mb-1 text-center">
           Add Transaction
         </h1>
-        <p className="text-center text-[#64748B] mb-6">
+        <p className="text-center text-sm text-[#5B7A76] mb-5">
           Record income or expense
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-100 text-[#F43F5E] rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-rose-50 text-[#E11D48] rounded-xl text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Type
-            </label>
+            <LabelWithInfo label="Type" onInfo={() => setInfoKey("type")} />
             <select
               {...register("type")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             >
               <option value="expense">Expense</option>
               <option value="income">Income</option>
@@ -125,34 +195,36 @@ function CreateTransaction() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Account
-            </label>
+            <LabelWithInfo
+              label="Account"
+              onInfo={() => setInfoKey("account_id")}
+            />
             <select
               {...register("account_id")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             >
               <option value={0}>Select account</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name}
+                  {account.name} ({typeLabel[account.type] || account.type})
                 </option>
               ))}
             </select>
             {errors.account_id && (
-              <p className="text-[#F43F5E] text-sm mt-1">
+              <p className="text-[#E11D48] text-xs mt-1">
                 {errors.account_id.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Category
-            </label>
+            <LabelWithInfo
+              label="Category"
+              onInfo={() => setInfoKey("category_id")}
+            />
             <select
               {...register("category_id")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             >
               <option value={0}>Select category</option>
               {filteredCategories.map((category) => (
@@ -162,55 +234,61 @@ function CreateTransaction() {
               ))}
             </select>
             {errors.category_id && (
-              <p className="text-[#F43F5E] text-sm mt-1">
+              <p className="text-[#E11D48] text-xs mt-1">
                 {errors.category_id.message}
+              </p>
+            )}
+            {filteredCategories.length === 0 && (
+              <p className="text-xs text-[#5B7A76] mt-1">
+                No {selectedType} categories.{" "}
+                <Link
+                  to="/categories/create"
+                  className="text-[#7C3AED] hover:underline"
+                >
+                  Add one
+                </Link>
               </p>
             )}
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Amount
-            </label>
+            <LabelWithInfo label="Amount" onInfo={() => setInfoKey("amount")} />
             <input
               type="number"
               step="0.01"
               {...register("amount")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
               placeholder="0.00"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             />
             {errors.amount && (
-              <p className="text-[#F43F5E] text-sm mt-1">
+              <p className="text-[#E11D48] text-xs mt-1">
                 {errors.amount.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Date
-            </label>
+            <LabelWithInfo
+              label="Date"
+              onInfo={() => setInfoKey("transaction_date")}
+            />
             <input
               type="date"
               {...register("transaction_date")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             />
-            {errors.transaction_date && (
-              <p className="text-[#F43F5E] text-sm mt-1">
-                {errors.transaction_date.message}
-              </p>
-            )}
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
-              Note (optional)
-            </label>
+            <LabelWithInfo
+              label="Note (optional)"
+              onInfo={() => setInfoKey("note")}
+            />
             <input
               type="text"
               {...register("note")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
               placeholder="Optional note"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             />
           </div>
 
@@ -225,12 +303,52 @@ function CreateTransaction() {
           <button
             type="button"
             onClick={() => navigate("/transactions")}
-            className="w-full border border-[#E9D5FF] text-[#64748B] py-2.5 rounded-lg hover:bg-[#F5F3FF] transition"
+            className="w-full border border-[#99F6E4] text-[#5B7A76] py-2.5 rounded-lg hover:bg-[#F0FDFA] transition"
           >
             Cancel
           </button>
         </form>
       </div>
+
+      {infoKey && fieldHelp[infoKey] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-sm bg-white rounded-2xl border border-[#99F6E4] p-4">
+            <h2 className="text-lg font-bold text-[#134E4A] mb-2">
+              {fieldHelp[infoKey].title}
+            </h2>
+            <p className="text-sm text-[#5B7A76] mb-4">
+              {fieldHelp[infoKey].body}
+            </p>
+            <button
+              onClick={() => setInfoKey(null)}
+              className="w-full bg-[#7C3AED] text-white text-sm py-2.5 rounded-lg hover:bg-[#6D28D9]"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LabelWithInfo({
+  label,
+  onInfo,
+}: {
+  label: string;
+  onInfo: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 mb-1">
+      <span className="text-sm font-medium text-[#134E4A]">{label}</span>
+      <button
+        type="button"
+        onClick={onInfo}
+        className="w-5 h-5 rounded-full border border-[#99F6E4] text-[#0D9488] text-[10px] font-bold"
+      >
+        i
+      </button>
     </div>
   );
 }
