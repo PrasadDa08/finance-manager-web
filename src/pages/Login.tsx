@@ -1,97 +1,98 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { getCsrfCookie, login, user } from "../api/auth";
-import { Link, useNavigate } from "react-router-dom";
+import api from "../api/axios";
 import { useAuthStore } from "../store/authStore";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 function Login() {
   const navigate = useNavigate();
+  const setUser = useAuthStore((s) => s.setUser);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const setUser = useAuthStore((state) => state.setUser);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
       setError(null);
 
-      await getCsrfCookie();
+      await api.get("/sanctum/csrf-cookie");
+      const res = await api.post("/api/login", data);
 
-      await login(data);
-
-      const userResponse = await user();
-      setUser(userResponse.data.user);
-      console.log("Logged in user:", userResponse.data);
+      setUser(res.data.user);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F3FF]">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md border border-[#E9D5FF]">
-        <h1 className="text-3xl font-bold mb-2 text-center text-[#1E293B]">
-          Welcome Back
-        </h1>
-        <p className="text-center text-[#64748B] mb-6">
-          Login to manage your finances
-        </p>
+    <div className="min-h-screen bg-[#EEFCF8] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white border border-[#99F6E4] rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-12 h-12 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center font-bold text-lg mb-3">
+            FM
+          </div>
+          <h1 className="text-2xl font-bold text-[#134E4A]">Welcome back</h1>
+          <p className="text-sm text-[#5B7A76] mt-1">
+            Login to Finance Manager
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-100 text-[#F43F5E] rounded-lg text-sm">
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 text-[#E11D48] text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
+            <label className="block text-sm font-medium text-[#134E4A] mb-1">
               Email
             </label>
             <input
               type="email"
               {...register("email")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
-              placeholder="Enter your email"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              placeholder="you@example.com"
             />
             {errors.email && (
-              <p className="text-[#F43F5E] text-sm mt-1">
+              <p className="text-[#E11D48] text-xs mt-1">
                 {errors.email.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block mb-1 font-medium text-[#1E293B]">
+            <label className="block text-sm font-medium text-[#134E4A] mb-1">
               Password
             </label>
             <input
               type="password"
               {...register("password")}
-              className="w-full border border-[#E9D5FF] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
-              placeholder="Enter your password"
+              className="w-full border border-[#99F6E4] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              placeholder="Your password"
             />
             {errors.password && (
-              <p className="text-[#F43F5E] text-sm mt-1">
+              <p className="text-[#E11D48] text-xs mt-1">
                 {errors.password.message}
               </p>
             )}
@@ -105,13 +106,20 @@ function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="text-center text-sm text-[#64748B] mt-6">
+
+        <p className="text-sm text-center text-[#5B7A76] mt-5">
           Don’t have an account?{" "}
           <Link
             to="/register"
             className="text-[#7C3AED] font-medium hover:underline"
           >
-            Create one
+            Sign up
+          </Link>
+        </p>
+
+        <p className="text-sm text-center mt-3">
+          <Link to="/" className="text-[#5B7A76] hover:text-[#134E4A]">
+            ← Back to home
           </Link>
         </p>
       </div>

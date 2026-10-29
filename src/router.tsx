@@ -14,9 +14,13 @@ import Transactions from "./pages/Transactions";
 import CreateTransaction from "./pages/CreateTransaction";
 import EditTransaction from "./pages/EditTransaction";
 import Layout from "./components/Layout";
-import More from "./pages/more";
-
+import More from "./pages/More";
+import Landing from "./pages/Landing";
 const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Landing />,
+  },
   {
     path: "/login",
     element: <Login />,

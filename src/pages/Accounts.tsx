@@ -45,8 +45,12 @@ function Accounts() {
     try {
       await deleteAccount(id);
       setAccounts((prev) => prev.filter((account) => account.id !== id));
+      showToast("Account deleted", "success");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to delete account");
+      showToast(
+        err.response?.data?.message || "Failed to delete account",
+        "error",
+      );
     }
   };
 
