@@ -2,10 +2,13 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { logout as logoutRequest } from "../api/auth";
 import Toast from "./Toast";
+import { useState } from "react";
+import FeedbackModal from "./FeedbackModal";
 
 function Layout() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -40,6 +43,13 @@ function Layout() {
               <p className="font-bold text-[#1E293B]">Finance Manager</p>
               <p className="text-xs text-[#64748B]">Your money, clearly</p>
             </div>
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="text-xs font-medium text-[#0D9488] border border-[#99F6E4] bg-[#F0FDFA] px-2.5 py-1 rounded-lg hover:bg-white"
+            >
+              Feedback
+            </button>
           </div>
         </div>
 
@@ -83,6 +93,13 @@ function Layout() {
             FM
           </div>
           <p className="font-bold text-[#1E293B]">Finance Manager</p>
+          <button
+            type="button"
+            onClick={() => setFeedbackOpen(true)}
+            className="text-xs font-medium text-[#0D9488] border border-[#99F6E4] bg-[#F0FDFA] px-2.5 py-1 rounded-lg hover:bg-white"
+          >
+            Feedback
+          </button>
         </header>
 
         <main className="pb-12 md:pb-6">
@@ -113,7 +130,10 @@ function Layout() {
           <BottomLink to="/more" label="More" icon={<CategoriesIcon />} />
         </div>
       </nav>
-
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+      />
       <Toast />
     </div>
   );
@@ -142,7 +162,6 @@ function BottomLink({
     </NavLink>
   );
 }
-
 
 function DashboardIcon() {
   return (
