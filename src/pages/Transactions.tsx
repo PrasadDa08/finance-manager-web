@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getTransactions, deleteTransaction } from "../api/transactions";
 import { getAccounts } from "../api/accounts";
 import { useToastStore } from "../store/toastStore";
+import ConfirmModal from "../components/ConfirmModal";
 
 interface Transaction {
   id: number;
@@ -49,6 +50,8 @@ function Transactions() {
   const [showInfo, setShowInfo] = useState(false);
   const showToast = useToastStore((s) => s.show);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -77,16 +80,20 @@ function Transactions() {
     }
   }, [openMenuId]);
 
-  const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Delete this transaction?");
-    if (!confirmed) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
 
     try {
-      await deleteTransaction(id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
+      setDeleting(true);
+      await deleteTransaction(deleteId);
+      setTransactions((prev) => prev.filter((t) => t.id !== deleteId));
       showToast("Transaction deleted", "success");
+      setDeleteId(null);
+      setOpenMenuId(null);
     } catch (err: any) {
       showToast(err.response?.data?.message || "Failed to delete", "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -215,7 +222,7 @@ function Transactions() {
                               className="w-full text-left px-3 py-2.5 text-sm text-[#E11D48] hover:bg-rose-50"
                               onClick={() => {
                                 setOpenMenuId(null);
-                                handleDelete(tx.id);
+                                setDeleteId(tx.id);
                               }}
                             >
                               Delete
@@ -262,6 +269,14 @@ function Transactions() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Delete transaction?"
+        message="This cannot be undone."
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

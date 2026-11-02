@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAccounts, deleteAccount } from "../api/accounts";
 import { Link } from "react-router-dom";
 import { useToastStore } from "../store/toastStore";
+import ConfirmModal from "../components/ConfirmModal";
 
 interface Account {
   id: number;
@@ -18,6 +19,8 @@ function Accounts() {
   const [error, setError] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
   const showToast = useToastStore((s) => s.show);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -35,22 +38,22 @@ function Accounts() {
     fetchAccounts();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this account?",
-    );
-
-    if (!confirmed) return;
+  const handleDelete = async () => {
+    if (deleteId === null) return;
 
     try {
-      await deleteAccount(id);
-      setAccounts((prev) => prev.filter((account) => account.id !== id));
+      setDeleting(true);
+      await deleteAccount(deleteId);
+      setAccounts((prev) => prev.filter((account) => account.id !== deleteId));
       showToast("Account deleted", "success");
+      setDeleteId(null);
     } catch (err: any) {
       showToast(
         err.response?.data?.message || "Failed to delete account",
         "error",
       );
+    } finally {
+      setDeleting(true);
     }
   };
 
@@ -85,13 +88,11 @@ function Accounts() {
           + Add
         </Link>
       </div>
-
       {error && (
         <div className="mb-3 p-3 bg-rose-50 text-[#E11D48] rounded-xl text-sm">
           {error}
         </div>
       )}
-
       {loading ? (
         <p className="text-sm text-[#5B7A76]">Loading accounts...</p>
       ) : accounts.length === 0 ? (
@@ -138,7 +139,7 @@ function Accounts() {
                     Edit
                   </Link>
                   <button
-                    onClick={() => handleDelete(account.id)}
+                    onClick={() => setDeleteId(account.id)}
                     className="text-xs text-[#E11D48] hover:underline"
                   >
                     Delete
@@ -149,7 +150,6 @@ function Accounts() {
           ))}
         </div>
       )}
-
       {/* Info modal */}
       {showInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
@@ -174,6 +174,15 @@ function Accounts() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Delete account?"
+        message="This cannot be undone."
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      
     </div>
   );
 }

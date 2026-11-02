@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCategories, deleteCategory } from "../api/categories";
 import { useToastStore } from "../store/toastStore";
+import ConfirmModal from "../components/ConfirmModal";
 
 interface Category {
   id: number;
@@ -19,6 +20,8 @@ function Categories() {
   const [error, setError] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const showToast = useToastStore((s) => s.show);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -35,19 +38,22 @@ function Categories() {
     fetchCategories();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Delete this category?");
-    if (!confirmed) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
 
     try {
-      await deleteCategory(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      setDeleting(true);
+      await deleteCategory(deleteId);
+      setCategories((prev) => prev.filter((c) => c.id !== deleteId));
       showToast("Category deleted", "success");
+      setDeleteId(null);
     } catch (err: any) {
       showToast(
         err.response?.data?.message || "Failed to delete category",
         "error",
       );
+    } finally {
+      setDeleting(true);
     }
   };
 
@@ -156,7 +162,7 @@ function Categories() {
                       Edit
                     </Link>
                     <button
-                      onClick={() => handleDelete(category.id)}
+                      onClick={() => setDeleteId(category.id)}
                       className="text-xs text-[#E11D48] hover:underline"
                     >
                       Delete
@@ -190,6 +196,15 @@ function Categories() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Delete category?"
+        message="This cannot be undone."
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }
