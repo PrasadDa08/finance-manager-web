@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../api/axios";
 import { useAuthStore } from "../store/authStore";
 
-
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Enter a valid email"),
@@ -48,6 +47,7 @@ function Register() {
       await api.post("/api/register/request-otp", data);
 
       setEmail(data.email);
+      otpForm.reset({ otp: "" });
       setStep(2);
       setInfo("We sent a 6-digit code to your email. Check inbox/spam.");
     } catch (err: any) {
@@ -183,6 +183,9 @@ function Register() {
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
                 {...otpForm.register("otp")}
                 className="w-full border border-[#99F6E4] rounded-lg px-3 py-2.5 text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
                 placeholder="000000"

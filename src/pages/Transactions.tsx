@@ -140,7 +140,7 @@ function Transactions() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white border border-[#99F6E4] rounded-2xl overflow-hidden divide-y divide-[#CCFBF1]">
+        <div className="bg-white border border-[#99F6E4] rounded-2xl mb-7 divide-y divide-[#CCFBF1]">
           {transactions.map((tx) => {
             const bg =
               tx.category?.color ||
