@@ -16,6 +16,9 @@ import EditTransaction from "./pages/EditTransaction";
 import Layout from "./components/Layout";
 import More from "./pages/More";
 import Landing from "./pages/Landing";
+import Budgets from "./pages/Budgets";
+import CreateBudget from "./pages/CreateBudget";
+import EditBudget from "./pages/EditBudget";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -48,8 +51,10 @@ const router = createBrowserRouter([
       { path: "/transactions/create", element: <CreateTransaction /> },
       { path: "/transactions/:id/edit", element: <EditTransaction /> },
       { path: "/more", element: <More /> },
+      { path: "/budgets", element: <Budgets /> },
+      { path: "/budgets/create", element: <CreateBudget /> },
+      { path: "/budgets/:id/edit", element: <EditBudget /> },
     ],
   },
 ]);
-
 export default router;
