@@ -1,17 +1,28 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import z from "zod";
 import { getBudget, updateBudget } from "../api/budgets";
 import { useToastStore } from "../store/toastStore";
-import { getCategories } from "../api/categories";
+import { getAccounts } from "../api/accounts";
 
-const budgetSchema = z.object({
-  category_id: z.coerce.number().min(1, "Select a category"),
-  amount: z.coerce.number().min(0.01, "Amount must me greater than 0"),
-  month_start: z.string().min(1, "select a month"),
-});
+const budgetSchema = z
+  .object({
+    type: z.enum(["overall", "account"]),
+    account_id: z.coerce.number().nullable(),
+    amount: z.coerce.number().min(0.01, "Amount must me greater than 0"),
+    month_start: z.string().min(1, "select a month"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "account" && (!data.account_id || data.account_id < 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select an account",
+        path: ["account_id"],
+      });
+    }
+  });
 
 type BudgetFormData = z.infer<typeof budgetSchema>;
 
@@ -23,55 +34,66 @@ function currentMonthStart() {
   return `${y}-${m}-01`;
 }
 
+const typeLabel: Record<string, string> = {
+  bank: "Bank",
+  cash: "Cash",
+  credit_card: "Credit Card",
+  wallet: "Wallet",
+};
+
 function EditBudget() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const { id } = useParams();
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      category_id: 0,
+      account_id: 0,
       amount: 0,
       month_start: currentMonthStart(),
     },
   });
+
+  const selectedType = watch("type");
 
   useEffect(() => {
     const load = async () => {
       try {
         setFetching(true);
         setError(null);
-        const [budgetRes, catRes] = await Promise.all([
+        const [budgetRes, accRes] = await Promise.all([
           getBudget(Number(id)),
-          getCategories(),
+          getAccounts(),
         ]);
         const budget = budgetRes.data.data;
-        setCategories(catRes.data.data);
+        setAccounts(accRes.data.data || []);
 
         reset({
-          category_id: budget.category_id,
+          type: budget.type,
+          account_id: budget.account_id || 0,
           amount: budget.amount,
           month_start: budget.month_start.slice(0, 7),
         });
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load category");
+        setError(err.response?.data?.message || "Failed to load budget");
       } finally {
         setFetching(false);
       }
     };
 
     load();
-  }, [id]);
+  }, [id, reset]);
 
   const onSubmit = async (data: BudgetFormData) => {
     try {
@@ -81,9 +103,9 @@ function EditBudget() {
       showToast("Budget updated", "success");
       navigate("/budgets");
     } catch (err: any) {
-      const message = err.res?.data?.message || "Failed to update budget";
+      const message = err.response?.data?.message || "Failed to update budget";
       setError(message);
-      showToast(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -92,7 +114,7 @@ function EditBudget() {
   if (fetching) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-[#EEFCF8] flex items-center justify-center">
-        <p className="text-sm text-[#5B7A76]">Loading category...</p>
+        <p className="text-sm text-[#5B7A76]">Loading Budget...</p>
       </div>
     );
   }
@@ -101,7 +123,7 @@ function EditBudget() {
     <div className="min-h-[calc(100vh-4rem)] bg-[#EEFCF8] flex items-center justify-center p-4 md:p-6">
       <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm w-full max-w-md border border-[#99F6E4]">
         <h1 className="text-2xl font-bold text-[#134E4A] mb-1 text-center">
-          Add Budget
+          Edit Budget
         </h1>
         <p className="text-center text-sm text-[#5B7A76] mb-5">
           Set a monthly limit for an expense category
@@ -116,25 +138,41 @@ function EditBudget() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#134E4A] mb-1">
-              Category
+              Type
             </label>
             <select
-              {...register("category_id")}
+              {...register("type")}
               className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             >
-              <option value={0}>Select category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              <option value={0}>Select Type</option>
+              <option value="overall">Overall</option>
+              <option value="account">Account</option>
             </select>
-            {errors.category_id && (
-              <p className="text-[#E11D48] text-xs mt-1">
-                {errors.category_id.message}
-              </p>
-            )}
           </div>
+
+          {selectedType === "account" && (
+            <div>
+              <label className="block text-sm font-medium text-[#134E4A] mb-1">
+                Account
+              </label>
+              <select
+                {...register("account_id")}
+                className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              >
+                <option value={0}>Select account</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({typeLabel[a.type] || a.type})
+                  </option>
+                ))}
+              </select>
+              {errors.account_id && (
+                <p className="text-[#E11D48] text-xs mt-1">
+                  {errors.account_id.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-[#134E4A] mb-1">

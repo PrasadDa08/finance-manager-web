@@ -6,18 +6,18 @@ import ConfirmModal from "../components/ConfirmModal";
 
 interface BudgetItem {
   id: number;
-  category_id: number;
+  type: "account" | "overall";
+  account_id: number;
   amount: number;
   month_start: string;
   spent: number;
   remaining: number;
   percent: number;
   status: "over" | "near" | "under";
-  category: {
+  account: {
     id: number;
     name: string;
     type: string;
-    color: string;
   };
 }
 
@@ -42,7 +42,13 @@ function Budgets() {
         setLoading(true);
         setError(null);
         const res = await getBudgets(month);
-        setBudgets(res.data.data || []);
+        const list = res.data.data || [];
+        list.sort((a: any, b: any) => {
+          if (a.type === "overall" && b.type !== "overall") return -1;
+          if (a.type !== "overall" && b.type === "overall") return 1;
+          return 0;
+        });
+        setBudgets(list);
       } catch (err: any) {
         setError(err.res?.data?.message);
       } finally {
@@ -87,7 +93,7 @@ function Budgets() {
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold text-[#134E4A]">Budgets</h1>
-          <p className="text-sm text-[#5B7A76]">Monthly category limits</p>
+          <p className="text-sm text-[#5B7A76]">Monthly limits</p>
         </div>
         <Link
           to="/budgets/create"
@@ -119,7 +125,7 @@ function Budgets() {
         <div className="bg-white border border-[#99F6E4] rounded-2xl p-4">
           <p className="font-semibold text-[#134E4A] mb-1">No budgets yet</p>
           <p className="text-sm text-[#5B7A76] mb-3">
-            Set a monthly limit for categories like Food or Transport.
+            Set a monthly limit for account spendings or overall spendings.
           </p>
           <Link
             to="/budgets/create"
@@ -138,7 +144,9 @@ function Budgets() {
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
                   <p className="font-semibold text-[#134E4A]">
-                    {budget.category?.name || "Category"}
+                    {budget.type === "overall"
+                      ? "Overall"
+                      : budget.account?.name || "Account"}
                   </p>
                   <p
                     className={`text-xs font-medium capitalize ${statusText(budget.status)}`}

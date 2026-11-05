@@ -4,14 +4,25 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createBudget } from "../api/budgets";
-import { getCategories } from "../api/categories";
 import { useToastStore } from "../store/toastStore";
+import { getAccounts } from "../api/accounts";
 
-const budgetSchema = z.object({
-  category_id: z.coerce.number().min(1, "Select a category"),
-  amount: z.coerce.number().min(0.01, "Amount must be greated than 0"),
-  month_start: z.string().min(1, "Select month"),
-});
+const budgetSchema = z
+  .object({
+    type: z.enum(["account", "overall"]),
+    account_id: z.coerce.number().nullable(),
+    amount: z.coerce.number().min(0.01, "Amount must be greated than 0"),
+    month_start: z.string().min(1, "Select month"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "account" && (!data.account_id || data.account_id < 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select an account",
+        path: ["account_id"],
+      });
+    }
+  });
 
 type BudgetFormData = z.infer<typeof budgetSchema>;
 
@@ -22,21 +33,30 @@ function currentMonthStart() {
   return `${y}-${m}-01`;
 }
 
+const typeLabel: Record<string, string> = {
+  bank: "Bank",
+  cash: "Cash",
+  credit_card: "Credit Card",
+  wallet: "Wallet",
+};
+
 function CreateBudget() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const showToast = useToastStore((s) => s.show);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      category_id: 0,
+      type: "overall",
+      account_id: 0,
       amount: 0,
       month_start: currentMonthStart(),
     },
@@ -45,18 +65,18 @@ function CreateBudget() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getCategories();
-        const list = (res.data.data || []).filter(
-          (c: any) => c.type === "expense",
-        );
-        setCategories(list);
+        const res = await getAccounts();
+        const list = res.data.data || [];
+        setAccounts(list);
       } catch (err: any) {
-        setError("Failed to load categories");
+        setError("Failed to load accounts");
       }
     };
 
     load();
   }, []);
+
+  const selectedType = watch("type");
 
   const onSubmit = async (data: BudgetFormData) => {
     try {
@@ -81,7 +101,7 @@ function CreateBudget() {
           Add Budget
         </h1>
         <p className="text-center text-sm text-[#5B7A76] mb-5">
-          Set a monthly limit for an expense category
+          Set a monthly limit for an account or overall expenses
         </p>
 
         {error && (
@@ -93,25 +113,40 @@ function CreateBudget() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#134E4A] mb-1">
-              Category
+              Type
             </label>
             <select
-              {...register("category_id")}
+              {...register("type")}
               className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
             >
-              <option value={0}>Select category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              <option value={0}>Select Type</option>
+              <option value="overall">Overall</option>
+              <option value="account">Account</option>
             </select>
-            {errors.category_id && (
-              <p className="text-[#E11D48] text-xs mt-1">
-                {errors.category_id.message}
-              </p>
-            )}
           </div>
+          {selectedType == "account" && (
+            <div>
+              <label className="block text-sm font-medium text-[#134E4A] mb-1">
+                Account
+              </label>
+              <select
+                {...register("account_id")}
+                className="w-full border border-[#99F6E4] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+              >
+                <option value={0}>Select account</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({typeLabel[a.type] || a.type})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {errors.account_id && (
+            <p className="text-[#E11D48] text-xs mt-1">
+              {errors.account_id.message}
+            </p>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-[#134E4A] mb-1">

@@ -9,7 +9,8 @@ export const getBudget = (id: number) => {
 };
 
 export const createBudget = (data: {
-  category_id: number;
+  type: string;
+  account_id: number | null;
   amount: number;
   month_start: string;
 }) => {
@@ -19,7 +20,8 @@ export const createBudget = (data: {
 export const updateBudget = (
   id: number,
   data: {
-    category_id: number;
+    type: string;
+    account_id: number | null;
     amount: number;
     month_start: string;
   },
