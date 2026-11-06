@@ -19,6 +19,7 @@ import Landing from "./pages/Landing";
 import Budgets from "./pages/Budgets";
 import CreateBudget from "./pages/CreateBudget";
 import EditBudget from "./pages/EditBudget";
+import DailySpend from "./pages/DailySpend";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: "/budgets", element: <Budgets /> },
       { path: "/budgets/create", element: <CreateBudget /> },
       { path: "/budgets/:id/edit", element: <EditBudget /> },
+      { path: "/daily-spend", element: <DailySpend/>}
     ],
   },
 ]);
