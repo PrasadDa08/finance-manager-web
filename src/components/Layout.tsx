@@ -70,6 +70,16 @@ function Layout() {
             <TransactionsIcon />
             Transactions
           </NavLink>
+
+          <NavLink to="/budgets" className={linkClass}>
+            <BudgetsIcon />
+            Budgets
+          </NavLink>
+
+          <NavLink to="/daily-spend" className={linkClass}>
+            <DailySpendIcon />
+            Daily Spend
+          </NavLink>
         </nav>
 
         <div className="p-4 border-t border-[#E9D5FF]">
@@ -235,6 +245,38 @@ function PlusIcon() {
       strokeWidth="2.5"
     >
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function BudgetsIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 1v22" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  );
+}
+
+function DailySpendIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
     </svg>
   );
 }

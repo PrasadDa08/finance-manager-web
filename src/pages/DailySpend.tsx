@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getDailySpend } from "../api/dailySpend";
 import { getCategories } from "../api/categories";
+import DayDetailModal from "../components/DayDetailModal";
 
 interface DayItem {
   date: string;
@@ -27,6 +28,7 @@ function DailySpend() {
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(0);
   const [days, setDays] = useState<DayItem[]>([]);
+  const [selectedDay, setSelectedDay] = useState<DayItem | null>(null);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -39,7 +41,7 @@ function DailySpend() {
     };
     loadCategories();
   }, []);
-  console.log(incomeCategories);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -68,15 +70,15 @@ function DailySpend() {
 
   const cardClass = (d: DayItem) => {
     if (d.kind === "today") {
-      return "border-[#7C3AED] bg-[#F5F3FF] ring-2 ring-[#7C3AED]/30";
+      return "rounded-xl border-2 border-[#7C3AED] bg-[#EDE9FE] shadow-md";
     }
     if (d.kind === "upcoming") {
-      return "border-[#9ea2a7] bg-[#dfdfdf] opacity-80";
+      return "rounded-xl border border-[#CBD5E1] bg-[#F1F5F9]";
     }
     if (d.status === "over") {
-      return "border-[#FECDD3] bg-[#FFF1F2]";
+      return "rounded-xl border border-[#FECDD3] bg-[#FFE4E6] shadow-sm";
     }
-    return "border-[#99F6E4] bg-white";
+    return "rounded-xl border border-[#99F6E4] bg-[#fff] shadow-sm";
   };
 
   return (
@@ -118,13 +120,13 @@ function DailySpend() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-white border border-[#99F6E4] rounded-lg p-2">
+        <div className="rounded-2xl border border-[#99F6E4] bg-white p-2.5 shadow-sm">
           <p className="text-xs text-[#5B7A76]">Monthly income</p>
           <p className="text-md font-bold text-[#134E4A]">
             ₹{Number(monthlyIncome).toFixed(0)}
           </p>
         </div>
-        <div className="bg-white border border-[#99F6E4] rounded-lg p-2">
+        <div className="rounded-2xl border border-[#99F6E4] bg-white p-2.5 shadow-sm">
           <p className="text-xs text-[#5B7A76]">Daily limit</p>
           <p className="text-md font-bold text-[#0F766E]">
             ₹{Number(dailyLimit).toFixed(0)}
@@ -145,26 +147,18 @@ function DailySpend() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 mt-4 text-xs text-[#5B7A76] mb-3">
-        <span className="flex items-center gap-1">
-          <span className="w-4 h-4 bg-[#F5F3FF] border border-[#7C3AED]" />{" "}
+      <div className="flex flex-wrap gap-2 mb-3 text-[11px]">
+        <span className="px-2 py-1 rounded-full bg-[#EDE9FE] text-[#7C3AED] font-medium">
           Today
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-4 h-4 bg-[#FFF1F2] border border-[#FECDD3]" /> Over
+        <span className="px-2 py-1 rounded-full border border-[#CBD5E1] bg-[#fff] text-[#0F766E] font-medium">
+          Under spent
         </span>
-        <span className="flex items-center gap-1">
-          <span className="w-4 h-4 bg-[#dfdfdf] border border-[#9ea2a7]" />{" "}
+        <span className="px-2 py-1 rounded-full bg-[#FFE4E6] text-[#E11D48] font-medium">
+          Over spent
+        </span>
+        <span className="px-2 py-1 rounded-full border border-[#CBD5E1] bg-[#F1F5F9] text-[#64748B] font-medium">
           Upcoming
-        </span>
-        <span className="flex items-center gap-1">
-          <SpentIcon /> Spent Rs.
-        </span>
-        <span className="flex items-center gap-1 text-[#0F766E]">
-          <UnderSpentIcon /> Under Limit
-        </span>
-        <span className="flex items-center gap-1 text-[#E11D48]">
-          <OverSpentIcon /> Over Limit
         </span>
       </div>
 
@@ -173,48 +167,87 @@ function DailySpend() {
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-7 gap-1 sm:gap-2 mb-2">
           {days.map((d) => (
-            <div
-              key={d.date}
-              className={` border p-2.5 min-h-[100px] ${cardClass(d)}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-md font-bold text-[#134E4A]">
-                  {d.date.slice(-2)}
-                </span>
-                <span className="text-[13px] text-[#5B7A76] capitalize">
-                  {d.day.slice(0, 3)}
-                </span>
-              </div>
-              <hr className="text-[#9ea2a7]" />
+            <div className = {`flex flex-col justify-between ${cardClass(d)}`}>
+              <div
+                key={d.date}
+                className={`p-2.5 min-h-[80px]`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-md font-bold text-[#134E4A]">
+                    {d.date.slice(-2)}
+                  </span>
+                  <span className="text-[13px] text-[#5B7A76] capitalize">
+                    {d.day.slice(0, 3)}
+                  </span>
+                </div>
 
-              {d.kind === "upcoming" ? (
-                <p className="text-xs sm:text-sm text-[#94A3B8] mt-2 gap-2 flex items-center">
-                    <UpcomingIcon/>
-                  <span>Upcoming</span>
-                </p>
-              ) : (
-                <>
-                  <p className="text-xs sm:text-sm text-[#5B7A76] mt-2 mb-2 gap-2 flex items-center">
-                    <SpentIcon /> <span>₹{Number(d.spent).toFixed(0)}</span>
+                <hr className="text-[#9ea2a7]" />
+
+                {d.kind === "upcoming" ? (
+                  <p className="mt-2 flex items-center gap-1 text-xs font-medium text-[#64748B]">
+                    <UpcomingIcon /> Upcoming
                   </p>
-                  <p
-                    className={`text-xs sm:text-sm font-medium mt-1 gap-2 flex items-center ${
-                      d.status === "over" ? "text-[#E11D48]" : "text-[#0F766E]"
-                    }`}
-                  >
-                    {d.status === "over" ? (
-                      <OverSpentIcon />
-                    ) : (
-                      <UnderSpentIcon />
-                    )}{" "}
-                    <span>₹{Math.abs(Number(d.remaining)).toFixed(0)}</span>
-                  </p>
-                </>
-              )}
+                ) : (
+                  <>
+                    <p className="mt-2 flex items-center gap-1 text-xs text-[#475569]">
+                      <SpentIcon />
+                      <span className="font-semibold text-[#134E4A]">
+                        ₹{Number(d.spent).toFixed(0)}
+                      </span>
+                    </p>
+                    <p
+                      className={`mt-1 flex items-center gap-1 text-[10px] sm:text-xs font-semibold ${
+                        d.status === "over"
+                          ? "text-[#E11D48]"
+                          : "text-[#0F766E]"
+                      }`}
+                    >
+                      {d.status === "over" ? (
+                        <OverSpentIcon />
+                      ) : (
+                        <UnderSpentIcon />
+                      )}
+                      {d.status === "over" ? "Over spent" : "Under spent"}
+                    </p>
+                    <p
+                      className={`mt-0.5 ms-4 text-[10px] sm:text-xs font-semibold ${
+                        d.status === "over"
+                          ? "text-[#E11D48]"
+                          : "text-[#0F766E]"
+                      }`}
+                    >
+                      {" "}
+                      (₹{Math.abs(d.remaining)})
+                    </p>
+                  </>
+                )}
+                {/* {d.kind === "today" && (
+                <span className="block mt-0.5 text-[10px] text-center font-bold text-[#7C3AED]">
+                  TODAY
+                </span>
+
+              )} */}
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDay(d)}
+                  className="border-t  p-1 mt-auto w-[100%] flex justify-center items-center gap-2 text-xs text-[#64748B] hover:text-[#7C3AED]"
+                  title="View day"
+                >
+                  <EyeIcon /> Details
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <DayDetailModal
+        open={selectedDay !== null}
+        day={selectedDay}
+        onClose={() => setSelectedDay(null)}
+      />
     </div>
   );
 }
@@ -230,7 +263,7 @@ function SpentIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
     >
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v10" />
@@ -248,7 +281,7 @@ function OverSpentIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
     >
       <path d="M12 9v4" />
       <path d="M12 17h.01" />
@@ -266,7 +299,7 @@ function UnderSpentIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
     >
       <path d="M20 6L9 17l-5-5" />
     </svg>
@@ -276,16 +309,32 @@ function UnderSpentIcon() {
 function UpcomingIcon() {
   return (
     <svg
-    className="inline"
+      className="inline"
       width="14"
       height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
     >
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }

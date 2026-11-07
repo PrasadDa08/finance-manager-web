@@ -6,3 +6,7 @@ export const getDailySpend = (params?: {
 }) => {
   return api.get("/api/dailyspend", { params });
 };
+
+export const getDailySummary = (date?:string) => {
+  return api.get("/api/daily-summary", { params: {date} });
+};
