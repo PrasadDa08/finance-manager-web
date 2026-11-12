@@ -5,6 +5,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../api/axios";
 import { useAuthStore } from "../store/authStore";
+import { isMobileApp } from "../utils/device";
+import { saveToken } from "../utils/authStorage";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -69,6 +71,11 @@ function Register() {
       });
 
       setUser(res.data.user);
+
+      if (res.data.token && isMobileApp()) {
+        saveToken(res.data.token);
+      }
+
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid OTP");

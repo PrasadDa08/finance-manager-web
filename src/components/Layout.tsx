@@ -4,6 +4,7 @@ import { logout as logoutRequest } from "../api/auth";
 import Toast from "./Toast";
 import { useState } from "react";
 import FeedbackModal from "./FeedbackModal";
+import { clearToken } from "../utils/authStorage";
 
 function Layout() {
   const user = useAuthStore((state) => state.user);
@@ -17,6 +18,7 @@ function Layout() {
     } catch (error) {
       console.log(error);
     } finally {
+      clearToken();
       logout();
       navigate("/login");
     }

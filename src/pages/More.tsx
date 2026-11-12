@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { logout as logoutRequest } from "../api/auth";
+import { clearToken } from "../utils/authStorage";
 
 function More() {
   const user = useAuthStore((state) => state.user);
@@ -13,6 +14,7 @@ function More() {
     } catch (error) {
       console.log(error);
     } finally {
+      clearToken();
       logout();
       navigate("/login");
     }

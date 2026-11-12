@@ -5,6 +5,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../api/axios";
 import { useAuthStore } from "../store/authStore";
+import { isMobileApp } from "../utils/device";
+import { saveToken } from "../utils/authStorage";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -36,6 +38,11 @@ function Login() {
       const res = await api.post("/api/login", data);
 
       setUser(res.data.user);
+
+      if (res.data.token && isMobileApp()) {
+        saveToken(res.data.token);
+      }
+
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid email or password");
