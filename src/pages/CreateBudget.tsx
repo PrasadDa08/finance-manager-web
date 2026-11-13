@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Watch } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createBudget } from "../api/budgets";
@@ -83,7 +83,15 @@ function CreateBudget() {
       setLoading(true);
       setError(null);
 
-      await createBudget(data);
+      await createBudget({
+        type: data.type,
+        account_id: data.type === "account" ? data.account_id : null,
+        amount: data.amount,
+        month_start:
+          data.month_start.length === 7
+            ? `${data.month_start}-01`
+            : data.month_start,
+      });
       showToast("Budget created", "success");
       navigate("/budgets");
     } catch (err: any) {
