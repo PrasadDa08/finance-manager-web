@@ -4,6 +4,9 @@ export function getRecurrings() {
   return api.get("/api/recurring");
 }
 
+export const getRecurringTemplate = (id: number) =>
+  api.get(`/api/recurring/${id}`);
+
 export const getRecurringDue = (month?: string) =>
   api.get("/api/recurring-due", { params: month ? { month } : {} });
 

@@ -105,7 +105,7 @@ function CreateRecurring() {
       });
 
       showToast("Template created", "success");
-      navigate("/recurring");
+      navigate("/recurrings");
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to create";
       setError(message);

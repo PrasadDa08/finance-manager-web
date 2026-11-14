@@ -21,7 +21,8 @@ import CreateBudget from "./pages/CreateBudget";
 import EditBudget from "./pages/EditBudget";
 import DailySpend from "./pages/DailySpend";
 import Recurring from "./pages/Recurring";
-import CreateRecurring from "./pages/createRecurring";
+import CreateRecurring from "./pages/CreateRecurring";
+import EditRecurring from "./pages/EditRecurring";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: "/daily-spend", element: <DailySpend /> },
       { path: "/recurrings", element: <Recurring /> },
       { path: "/recurring/create", element: <CreateRecurring /> },
+      { path: "/recurring/:id/edit", element: <EditRecurring /> },
     ],
   },
 ]);

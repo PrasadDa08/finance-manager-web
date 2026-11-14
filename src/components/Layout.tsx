@@ -2,15 +2,39 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { logout as logoutRequest } from "../api/auth";
 import Toast from "./Toast";
-import { useState } from "react";
 import FeedbackModal from "./FeedbackModal";
 import { clearToken } from "../utils/authStorage";
+import { useEffect, useState } from "react";
+import { getRecurringDue } from "../api/recurring";
+import DueRecurringModal from "./DueRecurringModal";
 
 function Layout() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const navigate = useNavigate();
+  const [dueItems, setDueItems] = useState<any[]>([]);
+  const [dueOpen, setDueOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    if (sessionStorage.getItem("fm_due_prompt_shown")) return;
+
+    const load = async () => {
+      try {
+        const res = await getRecurringDue();
+        const list = res.data.data || [];
+        if (list.length > 0) {
+          setDueItems(list);
+          setDueOpen(true);
+          sessionStorage.setItem("fm_due_prompt_shown", "1");
+        }
+      } catch {
+        // silent
+      }
+    };
+    load();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -82,6 +106,11 @@ function Layout() {
             <DailySpendIcon />
             Daily Spend
           </NavLink>
+
+          <NavLink to="/recurrings" className={linkClass}>
+            <DailySpendIcon />
+            Recurring Txns
+          </NavLink>
         </nav>
 
         <div className="p-4 border-t border-[#E9D5FF]">
@@ -147,6 +176,19 @@ function Layout() {
         onClose={() => setFeedbackOpen(false)}
       />
       <Toast />
+
+      <DueRecurringModal
+        open={dueOpen}
+        items={dueItems}
+        onClose={() => setDueOpen(false)}
+        onUpdated={(id) => {
+          setDueItems((prev) => {
+            const next = prev.filter((t) => t.id !== id);
+            if (next.length === 0) setDueOpen(false);
+            return next;
+          });
+        }}
+      />
     </div>
   );
 }

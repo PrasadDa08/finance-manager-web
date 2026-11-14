@@ -2,8 +2,8 @@ import axios from "axios";
 import { getToken } from "../utils/authStorage";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  // baseURL: "http://localhost:8000",
+  // baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "http://localhost:8000",
   withCredentials: true, // Important for cookies
   withXSRFToken: true, // Important for Axios 1.x
   headers: {
@@ -12,7 +12,7 @@ const api = axios.create({
     "X-Requested-With": "XMLHttpRequest",
   },
   xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",     
 });
 
 api.interceptors.request.use((config) => {

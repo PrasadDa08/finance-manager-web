@@ -57,6 +57,13 @@ function More() {
           icon={<DailySpendIcon />}
         />
 
+        <MenuLink
+          to="/recurrings"
+          title="Recurring Txns"
+          subtitle="Recurring Transactions"
+          icon={<DailySpendIcon />}
+        />
+
         {/* Future items:
         <MenuLink to="/budgets" title="Budgets" ... />
         <MenuLink to="/settings" title="Settings" ... />
