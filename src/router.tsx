@@ -24,6 +24,7 @@ import Recurring from "./pages/Recurring";
 import EditRecurring from "./pages/EditRecurring";
 import CreateRecurring from "./pages/createRecurring";
 import Reports from "./pages/Reports";
+import Profile from "./pages/Profile";
 
 const router = createBrowserRouter([
   {
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
       { path: "/recurring/create", element: <CreateRecurring /> },
       { path: "/recurring/:id/edit", element: <EditRecurring /> },
       { path: "/reports", element: <Reports /> },
+      { path: "/profile", element: <Profile /> },
     ],
   },
 ]);
