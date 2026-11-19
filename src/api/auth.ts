@@ -27,3 +27,13 @@ export const logout = () => {
 export const user = () => {
   return api.get("/api/user");
 };
+
+export const forgotPassword = (email: string) =>
+  api.post("/api/forgot-password", { email });
+
+export const resetPassword = (data: {
+  email: string;
+  token: string;
+  password: string;
+  password_confirmation: string;
+}) => api.post("/api/reset-password", data);

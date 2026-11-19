@@ -25,6 +25,8 @@ import EditRecurring from "./pages/EditRecurring";
 import CreateRecurring from "./pages/createRecurring";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +41,8 @@ const router = createBrowserRouter([
     path: "/register",
     element: <Register />,
   },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset-password", element: <ResetPassword /> },
   {
     element: (
       <ProtectedRoute>

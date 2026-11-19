@@ -119,7 +119,7 @@ function Layout() {
 
           <NavLink to="/profile" className={linkClass}>
             <ProfileIcon />
-            Reports
+            Profile
           </NavLink>
         </nav>
 

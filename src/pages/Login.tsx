@@ -125,6 +125,12 @@ function Login() {
         </p>
 
         <p className="text-sm text-center mt-3">
+          <Link to="/forgot-password" className="text-sm text-[#7C3AED]">
+            Forgot password?
+          </Link>
+        </p>
+
+        <p className="text-sm text-center mt-3">
           <Link to="/" className="text-[#5B7A76] hover:text-[#134E4A]">
             ← Back to home
           </Link>
