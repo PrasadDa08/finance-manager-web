@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { getReport } from "../api/reports";
 import { getAccounts } from "../api/accounts";
+import { exportTransactions } from "../api/export";
+import { downloadBlob } from "../utils/download";
+import { useToastStore } from "../store/toastStore";
 
 function currentMonth() {
   const now = new Date();
@@ -9,11 +12,13 @@ function currentMonth() {
 
 function Reports() {
   const [month, setMonth] = useState(currentMonth());
-  const [accountId, setAccountId] = useState<string>("all");
+  const [accountId, setAccountId] = useState<string | number>("all");
   const [accounts, setAccounts] = useState<any[]>([]);
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const showToast = useToastStore((s) => s.show);
 
   useEffect(() => {
     const loadAccounts = async () => {
@@ -46,6 +51,24 @@ function Reports() {
     };
     load();
   }, [month, accountId]);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const res = await exportTransactions({
+        month,
+        account_id: accountId || "all",
+      });
+
+      const filename = `transactions-${month}.csv`;
+      downloadBlob(res.data, filename);
+      showToast("Export downloaded", "success");
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Export failed", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 bg-[#EEFCF8] min-h-[calc(100vh-4rem)]">
@@ -81,6 +104,14 @@ function Reports() {
             ))}
           </select>
         </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          className="border border-[#99F6E4] bg-white text-[#134E4A] text-sm px-3 py-2 rounded-lg disabled:opacity-60"
+        >
+          {exporting ? "Exporting..." : "Export CSV"}
+        </button>
       </div>
 
       {error && (
