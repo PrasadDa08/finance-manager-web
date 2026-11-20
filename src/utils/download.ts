@@ -1,30 +1,25 @@
 export async function downloadBlob(data: Blob, filename: string) {
-  const isAndroid = /Android/i.test(navigator.userAgent);
+  const file = new File([data], filename, {
+    type: data.type || "text/csv",
+  });
 
-  if (isAndroid) {
-    // Try opening the Blob as a downloadable link
-    const url = window.URL.createObjectURL(data);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.target = "_blank";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url);
-    }, 10000);
+  if (
+    navigator.share &&
+    navigator.canShare &&
+    navigator.canShare({ files: [file] })
+  ) {
+    await navigator.share({
+      files: [file],
+      title: "Finance Manager Export",
+    });
 
     return;
   }
 
-  // Normal browser download
-  const url = window.URL.createObjectURL(data);
-
+  // Fallback for browsers without file sharing
+  const url = URL.createObjectURL(data);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = filename;
 
@@ -32,7 +27,5 @@ export async function downloadBlob(data: Blob, filename: string) {
   a.click();
   a.remove();
 
-  setTimeout(() => {
-    window.URL.revokeObjectURL(url);
-  }, 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
